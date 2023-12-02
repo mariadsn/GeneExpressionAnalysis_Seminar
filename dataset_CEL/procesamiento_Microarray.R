@@ -14,6 +14,7 @@ BiocManager::install("hgu133plus2.db", force = TRUE)
 # la carpeta que contiene los dataset tambien debe de incluir este script
 
 # iniciacion de los paquetes
+library("BiocManager")
 library("affy")
 library("affyPLM")
 library("arrayQualityMetrics")
