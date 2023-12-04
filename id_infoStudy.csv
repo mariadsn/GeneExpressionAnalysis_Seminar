@@ -1,0 +1,13 @@
+cases,sample_type,name_id
+TCGA-BH-A18M-11A-33R-A12D-07,Solid Tissue Normal,Normal_breast_1
+TCGA-BH-A18R-11A-42R-A12D-07,Solid Tissue Normal,Normal_breast_2
+TCGA-BH-A1FE-11B-14R-A13Q-07,Solid Tissue Normal,Normal_breast_3
+TCGA-BH-A0BZ-11A-61R-A12P-07,Solid Tissue Normal,Normal_breast_4
+TCGA-BH-A0DH-11A-31R-A089-07,Solid Tissue Normal,Normal_breast_5
+TCGA-BH-A1F0-11B-23R-A137-07,Solid Tissue Normal,Normal_breast_6
+TCGA-PL-A8LV-01A-21R-A41B-07,Primary Tumor,Tumor_breast_1
+TCGA-BH-A0BC-01A-22R-A084-07,Primary Tumor,Tumor_breast_2
+TCGA-AR-A1AX-01A-11R-A12P-07,Primary Tumor,Tumor_breast_3
+TCGA-AC-A2FO-01A-11R-A180-07,Primary Tumor,Tumor_breast_4
+TCGA-AQ-A0Y5-01A-11R-A14M-07,Primary Tumor,Tumor_breast_5
+TCGA-AC-A3EH-01A-22R-A22K-07,Primary Tumor,Tumor_breast_6
