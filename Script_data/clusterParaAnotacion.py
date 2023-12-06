@@ -3,7 +3,7 @@
 
 import os
 
-path = os.path.dirname(os.path.realpath('GenclusterParaAnotacion.pyr'))
+path = os.path.dirname(os.path.realpath('GenclusterParaAnotacion.py'))
 
 
 lClusterG = {}
