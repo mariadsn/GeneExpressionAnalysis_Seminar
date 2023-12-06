@@ -5,35 +5,26 @@ install.packages("BiocManager") # gestiona paquetes de bioconductor
 BiocManager::install("maftools")
 BiocManager::install("TCGAbiolinks", forced=TRUE)
 
+# Seleccionar directorio de trabajo e impotar librerias
+
 library(BiocManager)
 library(TCGAbiolinks)
 library(SummarizedExperiment)
 library(DESeq2)
 
-library(pheatmap)
-library(maftools)
 
-library(limma)
+## RECOPILACION DE DATOS DE EXPRESION (COUNTS) DESDE LA BASE DE DATOS GDC
 
-library(DT)
-library(NOISeq)
-library(Cairo)
-library(scales)
-library(ComplexHeatmap)
-library(EDASeq)
-
-
-## RECOPILACION
-# descarga de datos TCGA-SKCM
 # obtener lista de los proyectos disponibles en GDC
 gdcprojects <- getGDCprojects()
-getProjectSummary('TCGA-SKCM') # resumen del proyecto
+getProjectSummary('TCGA-BRCA') # resumen del proyecto TCGA-BRCA (BREAST CANCER)
 
-# Lanza la consulta para recuperar todos los datos que satisfagan los criterios de búsqueda (breast cancer data)
-query_TCGA <- GDCquery(project = "TCGA-SKCM",
+# Lanza la consulta para recuperar todos los datos que satisfagan los criterios de búsqueda
+query_TCGA <- GDCquery(project = "TCGA-BRCA",
                   data.category = "Transcriptome Profiling",
                   data.type = "Gene Expression Quantification") # aplicacion de filtros
 output_query_TCGA <- getResults(query_TCGA)
+
 # lanzar consulta para: gene expression data; estrategia experimental: RNA-Seq, flujo de trabajo de analisis: STAR-counts, acceso: open
 query_TCGA <- GDCquery(project = "TCGA-BRCA",
                        data.category = "Transcriptome Profiling",
@@ -46,8 +37,9 @@ query_TCGA <- GDCquery(project = "TCGA-BRCA",
                                    "TCGA-PL-A8LV-01A-21R-A41B-07", "TCGA-BH-A0BC-01A-22R-A084-07",
                                    "TCGA-AR-A1AX-01A-11R-A12P-07", "TCGA-AC-A2FO-01A-11R-A180-07",
                                    "TCGA-AQ-A0Y5-01A-11R-A14M-07", "TCGA-AC-A3EH-01A-22R-A22K-07"))
-getResults(query_TCGA)
-# descarga de los datos
+getResults(query_TCGA) # muestra la consulta por pantalla
+
+# descarga de los datos - genera una carpera con los datos descargados
 GDCdownload(query_TCGA)
 
 #preprocesamiento de los datos descargados (counts)
@@ -55,10 +47,17 @@ SKCM.counts <- GDCprepare(query = query_TCGA,
                           summarizedExperiment = TRUE)
 rm(query_TCGA)
 
-# Matriz de expresión
+# Subir informacion de los datos descargados (tipos de muestras)
+colData <- read.delim("../id_infoStudy.csv", stringsAsFactors = TRUE, sep = ',')
+
+# Matriz de expresión - counts
 counts_data <- assay(SKCM.counts)
 
-colData <- read.delim("id_infoStudy.csv", stringsAsFactors = TRUE, sep = ',')
+# PREPROCESAMIENTO DE LOS DATOS
+
+# obtener el nombre del gen id
+gene_names <-SKCM.counts@rowRanges@elementMetadata@listData$gene_name
+rownames(counts_data) <- gene_names
 
 # convert counts to DGEList object
 dds <- DESeqDataSetFromMatrix(countData = counts_data, colData = colData, design = ~ sample_type)
@@ -67,6 +66,12 @@ dds <- DESeqDataSetFromMatrix(countData = counts_data, colData = colData, design
 keep <- rowSums(counts(dds)) >=10
 dds <- dds[keep,]
 
+# estandarizar los datos counts en log2
+countdata <- counts(dds) # para obtener el log2
+countdata_log2 <- log2(countdata +1)
+
+
+# CALCULOS DE LOS GENES DIFERENCIALMENTE EXPRESADOS
 # set the factor level
 dds$sample_type <- relevel(dds$sample_type, ref = 'Solid Tissue Normal')
 
@@ -74,13 +79,12 @@ dds$sample_type <- relevel(dds$sample_type, ref = 'Solid Tissue Normal')
 dds <- DESeq(dds) # datos para el analisis diferencial
 res <- results(dds)
 summary(res)
-countdata <- counts(dds) # para obtener el log2
-countdata_log2 <- log2(countdata +1)
 
 # explore results
-fold.change.Breast <- res$log2FoldChange # para obtener FC
-adj.Pval.Breast <- res$padj # pvalor ajustado
+fold.change.Breast <- res$log2FoldChange # para obtener FC: la magnitud del cambio en la expresion de dos condiciones (diferencia logaritmica)
+adj.Pval.Breast <- res$padj # pvalor ajustado: mide la significancia estadistica del cambio en la expresion genica
 genes.ids.Breast <- rownames(res)
+
 # metodo combinado para los genes activados y reprimidos
 activated.genes.breast.1 <- genes.ids.Breast[fold.change.Breast > 2 & adj.Pval.Breast < 0.005]
 repressed.genes.breast.1 <- genes.ids.Breast[fold.change.Breast < -2 & adj.Pval.Breast < 0.005]
@@ -97,10 +101,11 @@ points(fold.change.Breast[activated.genes.breast.1],log.padj.breast[activated.ge
 points(fold.change.Breast[repressed.genes.breast.1],log.padj.breast[repressed.genes.breast.1], 
        pch = 19, cex = 0.5, col = "blue")
 
-# obtencion de los datos log2
-breast.all.DEG <- union(activated.genes.breast.1, repressed.genes.breast.1)
+# OBTENER DOS DATASET NORMAL Y TUMOR CON GENES DIFERENCIALMENTE EXPRESADOS
+breast.all.DEG <- genes.ids.Breast[fold.change.Breast > 2 | fold.change.Breast < -2 & adj.Pval.Breast < 0.005]
+length(breast.all.DEG)
 # cambio nombres columnas
-colnames(countdata_log2) <-sampleinfo$name_id
+colnames(countdata_log2) <-colData$name_id
 normal.breast.DEG.table <- countdata_log2[, c("Normal_breast_1", "Normal_breast_2", 
                                                 "Normal_breast_3", "Normal_breast_4", 
                                                 "Normal_breast_5", "Normal_breast_6")]
