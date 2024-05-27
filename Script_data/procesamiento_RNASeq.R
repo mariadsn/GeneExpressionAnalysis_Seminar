@@ -102,7 +102,7 @@ points(fold.change.Breast[repressed.genes.breast.1],log.padj.breast[repressed.ge
        pch = 19, cex = 0.5, col = "blue")
 
 # OBTENER DOS DATASET NORMAL Y TUMOR CON GENES DIFERENCIALMENTE EXPRESADOS
-breast.all.DEG <- genes.ids.Breast[fold.change.Breast > 2 | fold.change.Breast < -2 & adj.Pval.Breast < 0.005]
+breast.all.DEG <- genes.ids.Breast[(fold.change.Breast > 2 | fold.change.Breast < -2) & adj.Pval.Breast < 0.005]
 length(breast.all.DEG)
 # cambio nombres columnas
 colnames(countdata_log2) <-colData$name_id
